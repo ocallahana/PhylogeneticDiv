@@ -1,0 +1,25 @@
+Eukaryota
++-Viridiplantae
+| \-Streptophyta
+|   \-Magnoliopsida
+|     \-Gentianales
+|       \-Rubiaceae
+|         \-Galium
+|           \-Galium triflorum
+\+Metazoa
+  \-Aves
+    +-Strigiformes
+    | \-Strigidae
+    |   \-Glaucidium
+    |     \-Glaucidium gnoma
+    \-Passeriformes
+      +-Cardinalidae
+      | \-Pheucticus
+      |   \-Pheucticus melanocephalus
+      ++Certhiidae
+      | \-Certhia americana
+      ++Turdidae
+      | \-Catharus ustulatus
+      \+Sittidae
+        \-Sitta canadensis
+-----------------------------------
