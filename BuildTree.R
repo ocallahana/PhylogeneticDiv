@@ -110,9 +110,25 @@ plantspeciesdf = as.data.frame(plantspecies)
 plantspeciesdf = rename(plantspeciesdf, species = plantspecies)
 write.csv(plantspeciesdf, "plantspeciesdf.csv")
 
+#needs to be cleaned better, select first 2 phrases
+library(stringr)
+plantspeciescut = ifelse(is.na(word(plantspeciesdf$species, 1, 2)), plantspeciesdf$species, word(plantspeciesdf$species, 1, 2))
+write.csv(plantspeciescut, "plantspeciescut.csv")
+plantspeciescut2 = paste(plantspeciescut, collapse=",")
+#remove unidentified species
+plantspeciescut2df = as.data.frame(plantspeciescut)
+
+plantspeciescut3 = as.data.frame(plantspeciescut2df[!grepl("sp.", plantspeciescut2df$plantspeciescut),])
+plantspeciescut3alt = as.data.frame(plantspeciescut2df[!grepl("spp.", plantspeciescut2df$plantspeciescut),])
+plantspeciescut3$species = plantspeciescut3$`plantspeciescut2df[!grepl("sp.", plantspeciescut2df$plantspeciescut), ]`
+plantspeciescut3a = as.data.frame(plantspeciescut3[!grepl("spp.", plantspeciescut3$species),])
+write.csv(plantspeciescut3a, "plantspeciescut_nospeciesmissinga.csv")
+
+
 
 #Combine all 3 into list:
 
 allspeciesdf = rbind(plantspeciesdf,beetlespeciesdf, birdspeciesdf)
 write.csv(allspeciesdf, "allspeciesdf.csv")
+
                           
