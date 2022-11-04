@@ -1,0 +1,210 @@
+---
+title: "Plant Diversity"
+author: "Ayanna St. Rose"
+date: "7/21/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#ft stands for forest type
+#Guanica Forest (GUAN) is a tropical site in Puerto Rico, ft= evergreen forest
+#Mountain Lake Biological Station (MLBS) is a  site in Virginia, ft= deciduous forest
+#Wind River Experimental Forest (WREF) is a site in Washington, ft= evergreen forest
+
+#Download and load necessary packages
+```{r}
+install.packages("tidyverse")
+install.packages("neonUtilities")
+install.packages("multcomp")
+install.packages("agricolae")
+
+library(agricolae)
+library(multcomp)
+library(neondiversity)
+library(dbplyr)
+library(tidyverse)
+library(neonUtilities)
+```
+
+#Download plant data using neonutilities
+```{r}
+plant_data = loadByProduct(dpID = "DP1.10058.001", 
+              site= c("BONA", "CLBJ", "DEJU", "GUAN", "HARV","KONZ", "LENO", "MLBS","NIWO", "ONAQ","ORNL", "OSBS", "SCBI", "SJER","SOAP","TALL","UKFS","UNDE","WREF","YELL", "ABBY","BART", "BIGC", "BLAN", "CUPE", "DELA", "FLNT", "GRSM", "GUIL", "HEAL", "HOPB", "JERC", "KING", "LECO", "LEWI", "LIRO", "MART", "MAYF", "MCRA", "MOAB", "POSE", "PRIN", "TEAK", "PUUM", "REDB","SERC", "RMNP","STEI", "SUGG", "TECR", "TOMB", "TREE", "WALK", "WLOU"),
+              startdate = "2013-01", enddate = "2021-09",
+              check.size = FALSE)
+```
+
+#Extract expert taxonomic ID from data list
+```{r}
+#Get data set for presence of species is observed in six 10m2 subplots
+#and four 100m2 subplots per plot
+plant_taxa = plant_data$div_10m2Data100m2Data
+
+#Drop UID
+plant_taxa = subset(plant_taxa, select = -c(uid))
+
+#Get dataset for  presence and percent cover of plant species and ground
+#cover is observed in six 1m2 subplots per plot
+plant_taxa1 = plant_data$div_1m2Data
+
+#Drop UID
+plant_taxa1 = subset(plant_taxa1, select = -c(uid))
+
+#Combine for a list of species at the 400m2 plot scale.
+#For no duplicates, omit "by" command
+plant_full_data = merge(plant_taxa, plant_taxa1,
+                   all = TRUE, no.dups = TRUE)
+
+#Remove rows where taxon ID says NA
+plant_full_data = plant_full_data %>% drop_na(taxonID)
+``` 
+
+#Write Plant total diversity including taxonomic information
+```{r}
+write.csv(plant_full_data, "plant_full_data.csv", row.names = FALSE)
+```
+#There isn't a count for plants, more so a presence and absence data
+###Goal:
+#####Run species richness for each site
+#####Create data frame with different species for each site
+#####Pseudoabundance is how many times the species is repeated (run for each site)
+#####Count number of times a unique species occurs in each site
+
+```{r}
+#plant occurrence only sorted by siteID
+#Quantify plant occurrence
+#Group by specific epithet and site ID
+
+plant_occ = plant_full_data %>%
+  tabyl(taxonID, siteID, sort = TRUE)
+
+#Show species distribution for each species for each site
+plant_occ = data.frame(t(plant_occ))
+
+names(plant_occ) <- as.matrix(plant_occ[1,])
+plant_occ = plant_occ[-1,]
+
+#Remove Unknown species (indicated as 2Plant in dataset)
+plant_occ = plant_occ[, !(colnames(plant_occ) %in% c("2PLANT","2PLANT-H", "2PLANT-S"))]
+
+
+plant_occ[] <- lapply(plant_occ, function(x) type.convert(as.character((x))))
+
+#Count the number of non-zero cells for each row
+#This will give you the richness per site
+#This will appear in the final column of the dataset
+plant_occ$count <- rowSums(plant_occ!=0)
+
+#Rename count as species richness
+names(plant_occ)[5226] = "species_richness"
+
+#Calculate abundance
+#Sum all rows except species_richness column
+row_sum = data.frame(rowSums(plant_occ[, -5226]))
+
+#rename column
+names(row_sum)[1] = "total_organisms"
+
+#rename 0th column
+plant_occ<-tibble::rownames_to_column(plant_occ, "siteID") 
+
+#rename 0th column
+row_sum<-tibble::rownames_to_column(row_sum, "siteID") 
+
+#merge row_sum dataframe with plant_occ dataframe by 
+plant_occ = merge(plant_occ, row_sum,
+                   by = "siteID",
+                   all = TRUE, check.duplicates = FALSE)
+
+#This table contains occurrence and richness values (last 2 columns)
+```
+
+#Write Occurrence data to CSV file.
+```{r}
+write.csv(plant_occ, "plant_occ.csv", row.names = FALSE)
+```
+
+```{r}
+site_info = NEON_Field_Site_Metadata_20210226_0
+
+# Select interest sites
+site_info = site_info[site_info$field_site_id %in% c("BONA", "CLBJ", "DEJU", "GUAN", "HARV","KONZ", "LENO", "MLBS","NIWO", "ONAQ","ORNL", "OSBS", "SCBI", "SJER","SOAP","TALL","UKFS","UNDE","WREF","YELL", "ABBY","BART", "BIGC", "BLAN", "CUPE", "DELA", "FLNT", "GRSM", "GUIL", "HEAL", "HOPB", "JERC", "KING", "LECO", "LEWI", "LIRO", "MART", "MAYF", "MCRA", "MOAB", "POSE", "PRIN", "TEAK", "PUUM", "REDB","SERC", "RMNP","STEI", "SUGG", "TECR", "TOMB", "TREE", "WALK", "WLOU"), ]
+
+#Merge info for interest site with data
+plant_field_data = merge(plant_occ, site_info, by.x = "siteID", by.y = "field_site_id")
+
+#Export previous file
+write.csv(plant_field_data, "plant_field_data.csv", row.names = FALSE)
+
+
+#Import table into GIS and Make layers in GIS with species richness and total
+#number of species. This helps to visualize diversity.
+#Still have to figure out of to graph it
+```
+
+
+
+#Visualize species richness
+```{r}
+p1 = ggplot(plant_occ, aes(x = siteID, y = species_richness)) +
+  geom_histogram(stat = "identity") +
+  labs (title = "Histogram of Species Richness per Site", x= "site ID", y = "Number of Species") +
+     theme_bw() +
+      theme(panel.grid = element_blank(), 
+            axis.text = element_text(size = 12), 
+            axis.text.x = element_text(angle = 45, hjust = 1), 
+            axis.title = element_text(size = 12), 
+            plot.title = element_text(size = 14, hjust = 0.5, face = "bold")) 
+
+plot(p1)
+```
+
+
+#Create another dataframe which contains diversity information
+#Calculate Diversity indices using the Vegan Package in R
+```{r}
+plant_sp_div = t(plant_full_data %>%
+  tabyl(taxonID, siteID, sort = TRUE))
+
+#Convert to Data frame 
+plant_sp_div = data.frame(plant_sp_div)
+
+
+#Place specific epithet as row titles
+names(plant_sp_div) <- as.matrix(plant_sp_div[1,])
+plant_sp_div = plant_sp_div[-1,]
+plant_sp_div[] <- lapply(plant_sp_div, function(x) type.convert(as.character((x))))
+
+#Calculate Diversity Indices
+simpson_diversity = data.frame(diversity(plant_sp_div, "simpson"))
+simpson_diversity <-tibble::rownames_to_column(simpson_diversity, "siteID") 
+
+#eStar refers to the evenness, dStar = true diversity
+evenness = data.frame(eventstar(plant_sp_div))
+evenness<-tibble::rownames_to_column(evenness, "siteID") 
+
+#Shannon Diversity
+shannon_diversity = data.frame(diversity(plant_sp_div, "shannon"))
+shannon_diversity <-tibble::rownames_to_column(shannon_diversity, "siteID") 
+
+#Merge all 3 diversity tables
+
+diversity_index = merge(shannon_diversity, simpson_diversity, by = "siteID")
+diversity_index = merge(diversity_index, evenness, by = "siteID")
+
+names(diversity_index)[1] = "siteID"
+names(diversity_index)[2] = "shannon"
+names(diversity_index)[3] = "simpson"
+names(diversity_index)[5] = "evenness"
+names(diversity_index)[6] = "true_div"
+
+plant_field_data = merge(diversity_index, plant_field_data, by = "siteID")
+write.csv(plant_field_data, "plant_field_data.csv", row.names = FALSE)
+
+#merge richness and diversity indices
+richness = data.frame(plant_occ[, -c(2:5226)])
+plant_diversity_indices = merge(diversity_index, richness, by = "siteID")
+write.csv(plant_diversity_indices, "plant_div_indices.csv")
+```

@@ -129,6 +129,11 @@ write.csv(plantspeciescut3a, "plantspeciescut_nospeciesmissinga.csv")
 #Combine all 3 into list:
 
 allspeciesdf = rbind(plantspeciesdf,beetlespeciesdf, birdspeciesdf)
+n <- 20
+
+plantspeciessplit = split(plantspeciescut3a, factor(sort(rank(row.names(plantspeciescut3a))%%n)))
+plant1 = plantspeciessplit[["0"]]
+
 write.csv(allspeciesdf, "allspeciesdf.csv")
 
                           
