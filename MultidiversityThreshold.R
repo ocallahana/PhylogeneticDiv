@@ -10,15 +10,15 @@ plant_div_indicesSR = plant_div_indices %>% select('siteID','species_richness')
 #Averaged based multidiversity
 #sum all these and multiply by (1/n) so (1/3)
 bird_div_indicesSR_scale = as.data.frame(scale(bird_div_indicesSR$species_richness, center=T, scale=T))
-row.names(bird_div_indicesSR_scale) <- bird_div_indicesSR$siteID
+bird_div_indicesSR_scale$siteID <- bird_div_indicesSR$siteID
 
 #R Code from PNAS paper
 
 mfthres = function(x,df){
   for(i in 2:ncol(df)){
-  for (j in 1:length(Region_list)){
-    maximum=quantile(df[df$Region==Region_list [j],i],0.95,na.rm = TRUE) #SRmax.region
-    df[df$Region==Region_list [j],i]<-df[df$Region==Region_list [j],i]/maximum*100
+  for (j in 1:length(ncol)){
+    maximum=quantile(df[df$siteID==siteID_list [j],i],0.95,na.rm = TRUE) #SRmax.region
+    df[df$siteID==siteID_list [j],i]<-df[df$siteID==siteID_list [j],i]/maximum*100
      }
     }
   
@@ -31,6 +31,8 @@ mfthres = function(x,df){
   }
 
 thres<-seq(from = 10, to = 100, by=10) #defining lowest and highestminimum % to reach and interval
+
+mfthres(species_richness, bird_div_indicesSR_scale)
 
 fdf<-sapply(thres,mfthres,MF)
 fdf<-as.data.frame(fdf)
