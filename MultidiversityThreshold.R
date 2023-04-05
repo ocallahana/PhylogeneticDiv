@@ -62,7 +62,8 @@ multidiv_df$maxquant = quantile(multidiv_df$maxregion, 0.95,na.rm = TRUE)
 multidiv_df$quantquarter = quantile(multidiv_df$maxregion, 0.95,na.rm = TRUE)
 
 
-#R Code from PNAS paper
+#R Code from PNAS paper https://www.pnas.org/doi/10.1073/pnas.1906419116
+##Unclear code
 #make a region list?
 region_list = multidiv_df$siteID
 
@@ -98,5 +99,7 @@ for(i in 1:ncol(fdf)){
   fdf[,i]<-round(fdf[,i])}
 
 Threshold <-fdf
+
+
 
 
