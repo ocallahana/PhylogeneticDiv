@@ -1,6 +1,6 @@
 # PhylogeneticDiv
 
-##MULTITROPHIC DIVERSITY CODES
+## MULTITROPHIC DIVERSITY CODE
 
 I used MultidiversityThreshold.R to calculate multidiversity based on Ayanna's data and this paper: https://www.pnas.org/doi/10.1073/pnas.1906419116
 #output file was: multidiversityresults-nov7.csv
